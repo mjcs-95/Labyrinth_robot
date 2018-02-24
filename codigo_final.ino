@@ -653,6 +653,7 @@ void acotar_camino() {
 
 
 void loop(){
+    //comment the loop to start without signal
     while(start==0){
       if(Serial1.available()){
         int val = Serial1.read();
