@@ -14,12 +14,8 @@
 int start;
 
 /*Constantes y variables*/
-const float ResolutionADC=0.00488; //4.88mV
-float distance;
+const float ResolutionADC=0.00488f; //4.88mV
 unsigned long time_bounce;
-int Value_SharpR=0;
-int Value_SharpL=0;
-float VoltageR, VoltageL;
 float Voltage_CNY_Back_L=0.0f;
 float Voltage_CNY_Back_R=0.0f;
 float Voltage_CNY_Front=0.0f;
@@ -45,10 +41,7 @@ int diferencia;
 int estado=1; /* 1->Dentro de una casilla; 2->Tocando con sensor del frente; 3->Tocando con sensor de atrás */
 //Prueba
 bool parar=false;
-//
-int Value_CNY_Back_L=0;
-int Value_CNY_Back_R=0;
-int Value_CNY_Front=0;
+
 
 /* CNY pins */
 const int CNY_Back_L=A0;
@@ -66,25 +59,25 @@ const int SharpL=A8;
 const int Trigger=11;
 const int Echo=7;
 
-void stop() {
+void Stop() {
     analogWrite(pin2Left_Motor, 0);
     analogWrite(pin1RightMotor, 0);
     analogWrite(pin1Left_Motor, 0);
     analogWrite(pin2RightMotor, 0);
 }
 
-void stopRight() {
+void StopRight() {
     analogWrite(pin1RightMotor, 0);
     analogWrite(pin2RightMotor, 0);
 }
 
-void stopLeft() {
+void StopLeft() {
     analogWrite(pin2Left_Motor, 0);
     analogWrite(pin1Left_Motor, 0);
 }
 
-void forward(int AnalogValue) {
-    stop();
+void Forward(int AnalogValue) {
+    Stop();
     //Suponiendo una diferencia rotacional entre ruedas del 30%
     diferencia=0.2*AnalogValue;
     analogWrite(pin2Left_Motor, 0);
@@ -93,7 +86,7 @@ void forward(int AnalogValue) {
     analogWrite(pin2RightMotor, AnalogValue);
 }
 
-void tackRight() {
+void TackRight() {
     /*diferencia=0.2*AnalogValue;*/
     analogWrite(pin2Left_Motor, 0);
     analogWrite(pin1RightMotor, 0);
@@ -101,7 +94,7 @@ void tackRight() {
     analogWrite(pin2RightMotor, 255);
 }
 
-void tackLeft() {
+void TackLeft() {
     /*diferencia=0.2*AnalogValue;*/
     analogWrite(pin2Left_Motor, 0);
     analogWrite(pin1RightMotor, 0);
@@ -109,34 +102,38 @@ void tackLeft() {
     analogWrite(pin2RightMotor, 128);
 }
 
-void back(int AnalogValue) {
-    stop();
+void Back(int AnalogValue) {
+    Stop();
     analogWrite(pin1Left_Motor, 0);
     analogWrite(pin2RightMotor, 0);
     analogWrite(pin2Left_Motor, AnalogValue);
     analogWrite(pin1RightMotor, AnalogValue);
 }
 
-void backLeft() {
-    stop();
+void BackLeft() {
+    Stop();
     analogWrite(pin1Left_Motor, 0);
     analogWrite(pin2RightMotor, 0);
     analogWrite(pin2Left_Motor, 255);
     analogWrite(pin1RightMotor, 0);
 }
 
-void backRight() {
-    stop();
+void BackRight() {
+    Stop();
     analogWrite(pin1Left_Motor, 0);
     analogWrite(pin2RightMotor, 0);
     analogWrite(pin2Left_Motor, 0);
     analogWrite(pin1RightMotor, 255);
 }
 
+float VoltageFromAnalogRead(int pin){
+    return analogRead(pin)*ResolutionADC;
+}
+
 void UpdateCNYVoltage(){
-    Voltage_CNY_Back_L = analogRead(CNY_Back_L)*ResolutionADC;
-    Voltage_CNY_Back_R = analogRead(CNY_Back_R)*ResolutionADC;
-    Voltage_CNY_Front = analogRead(CNY_Front)*ResolutionADC;
+    Voltage_CNY_Back_L = VoltageFromAnalogRead(CNY_Back_L);
+    Voltage_CNY_Back_R = VoltageFromAnalogRead(CNY_Back_R);
+    Voltage_CNY_Front = VoltageFromAnalogRead(CNY_Front);
 }
 
 //Previously the Voltage required in all CNYs was 3.4
@@ -169,7 +166,8 @@ bool noLineFound() {
     return !lineFoundFront() && !lineFoundBack();
 }
 
-double getDistance(double valor) {  
+/* return the distance of a Sharp sensor based on its voltage*/
+double GetDistanceFromSharpVoltage(double valor) {  
     if(valor<0.5 || valor>2.7) {
         return 0;
     } else {
@@ -179,51 +177,34 @@ double getDistance(double valor) {
     }
 }
 
-void showSharpR() {
-  Value_SharpR=analogRead(SharpR);
-  VoltageR=Value_SharpR*ResolutionADC;
-  /*Serial.println(Value_SharpR);
-  Serial.print(" Voltage: ");
-  Serial.print(Voltage);
-  Serial.println(" V");*/
+void ShowSharpR() {
   Serial.print("Sharp R: ");
-  Serial.print(getDistance(VoltageR));
+  Serial.print(GetSharpR());
   Serial.println(" cm");
 }
 
-void showSharpL() {
-  Value_SharpL=analogRead(SharpL);
-  VoltageL=Value_SharpL*ResolutionADC;
-  /*Serial.println(Value_SharpR);
-  Serial.print(" Voltage: ");
-  Serial.print(VoltageL);
-  Serial.println(" V");*/
+void ShowSharpL() {
   Serial.print("Sharp L: ");
-  Serial.print(getDistance(VoltageL));
+  Serial.print(GetSharpL());
   Serial.println(" cm");
 }
 
-double getSharpR() {
-  Value_SharpR=analogRead(SharpR);
-  VoltageR=Value_SharpR*ResolutionADC;
-  return getDistance(VoltageR);
+double GetSharpR() {
+    return GetDistanceFromSharpVoltage( VoltageFromAnalogRead(SharpR) );
 }
 
-double getSharpL() {
-  Value_SharpL=analogRead(SharpL);
-  VoltageL=Value_SharpL*ResolutionADC;
-  return getDistance(VoltageL);
+double GetSharpL() {
+    return GetDistanceFromSharpVoltage( VoltageFromAnalogRead(SharpL) );
 }
 
-double getUltrasonic() {
+double GetUltrasonicDistance() {
   digitalWrite(Trigger, LOW);
   delayMicroseconds(5);
   digitalWrite(Trigger, HIGH);
   delayMicroseconds(10);
   digitalWrite(Trigger, LOW);
   time_bounce=pulseIn(Echo, HIGH);
-  distance = 0.017 * time_bounce; //Fórmula para calcular la distancia
-  return distance;
+  return 0.017 * time_bounce; //Fórmula para calcular la distancia
 }
 
 void setup(){
@@ -247,7 +228,6 @@ void setup(){
     start=0;
 }
 
-
 bool hasPassedBox() {
   int estado_anterior=estado;
   //Actualizar estado
@@ -268,38 +248,38 @@ bool hasPassedBox() {
 }
 
 void balanceLeft() {  /* Mantener el robot con la referencia de la pared de la izquierda */
-  double distL=getSharpL();
+  double distL=GetSharpL();
   if(distL<10) {   //Valía 6
     //Serial1.println("VIRANDO A LA DERECHA");
-    tackRight();
+    TackRight();
     delay(50);
-    stop();
+    Stop();
   }
   else {
     //Serial1.println("VIRANDO A LA IZQUIERDA");
-    tackLeft();
+    TackLeft();
     delay(50);
-    stop();
+    Stop();
   }
 }
 
 void balanceRight() {  /* Mantener el robot con la referencia de la pared de la derecha */
-  double distR=getSharpR();
+  double distR=GetSharpR();
   if(distR<10) {   //Valía 6
-    tackLeft();
+    TackLeft();
     delay(50);
-    stop();
+    Stop();
   }
   else {
-    tackRight();
+    TackRight();
     delay(50);
-    stop();
+    Stop();
   }
 }
 
 void intelligentForward(int potencia=150) {
-  double distR=getSharpR();
-  double distL=getSharpL();
+  double distR=GetSharpR();
+  double distL=GetSharpL();
   double diferencia=distR-distL;
   double umbralp=2;
   double umbraln=-umbralp;
@@ -308,67 +288,64 @@ void intelligentForward(int potencia=150) {
   
   if(distR>topeR || distR==0 || distL>topeL || distL==0) {
     if((distR>topeR || distR==0) && (distL>topeL || distL==0)) {
-      forward(potencia);
+      Forward(potencia);
     }
     if((distR>topeR || distR==0) && !(distL>topeL || distL==0)) {
       //Serial1.println("BALANCEANDO A LA IZQUIERDA");
       balanceLeft();
-      forward(potencia);
+      Forward(potencia);
     }
     if(!(distR>topeR || distR==0) && (distL>topeL || distL==0)) {
       //Serial1.println("BALANCEANDO A LA DERECHA");
       balanceRight();
-      forward(potencia);
+      Forward(potencia);
     }
   }
   else {
     if(diferencia>umbralp) {
-      tackRight();
+      TackRight();
       delay(50);
-      stop();
+      Stop();
     }
     else {
       if(diferencia<umbraln) {
-        tackLeft();
+        TackLeft();
         delay(50);
-        stop();
+        Stop();
       }
       else {
-        forward(potencia);
+        Forward(potencia);
       }
     }
   }
 }
 
 void alinear() {
-  stop();
+  Stop();
   bool alineado=false;
   while(!alineado) {
     if(!lineFoundBack()) {
       //Ir atrás
-      back(255);
+      Back(255);
     }
     else {
       if(lineFoundBack_R() && lineFoundBack_L()) {
         //Ya está alineado
         alineado=true;
-        stop();
+        Stop();
       }
       else {
         if(lineFoundBack_L()) {
           //Mover culo atrás a la izquierda
-          Serial1.println("YENDO ATRAS POR LA IZQUIERDA");
-          //Read CNY values
-          Value_CNY_Back_L = analogRead(CNY_Back_L);
-      
+          Serial1.println("YENDO ATRAS POR LA IZQUIERDA");      
           //Voltage calculation1
-          Voltage_CNY_Back_L = Value_CNY_Back_L*ResolutionADC;
+          Voltage_CNY_Back_L = VoltageFromAnalogRead(CNY_Back_L);
           Serial1.println("Valor ATRAS_L: "); Serial1.println(Voltage_CNY_Back_L);
-          backLeft();
+          BackLeft();
         }
         if(lineFoundBack_R()) {
           //Mover culo atrás a la derecha
-          backRight();
+          BackRight();
         }
       }
     }
@@ -425,7 +402,7 @@ void rotarDerecha(int iteraciones=10) {
     analogWrite(pin2RightMotor, 150);
     while(!revolucionesPin2(1)) {}
   }
-  stop();
+  Stop();
 }
 
 void rotarIzquierda(int iteraciones=10) {
@@ -436,7 +413,7 @@ void rotarIzquierda(int iteraciones=10) {
     analogWrite(pin1RightMotor, 150);
     while(!revolucionesPin2(1)) {}
   }
-  stop();
+  Stop();
 }
 
 void atras(int iteraciones=7) {
@@ -444,7 +421,7 @@ void atras(int iteraciones=7) {
     bool pararIzquierda=false;
     bool pararDerecha=false;
     if(pararIzquierda) {
-      stopLeft();
+      StopLeft();
     }
     else {
       //Mover rueda izquierda durante x revoluciones
@@ -454,7 +431,7 @@ void atras(int iteraciones=7) {
       }
     }
     if(pararDerecha) {
-      stopRight();
+      StopRight();
     }
     else {
       //Mover rueda derecha durante x revoluciones
@@ -464,7 +441,7 @@ void atras(int iteraciones=7) {
       }
     }
   }
-  stop();
+  Stop();
 }
 
 void rotar180() {
@@ -535,22 +512,16 @@ void loop(){
       }
     }
     ++tiempo;
-    //Read CNY values
-    Value_CNY_Back_L = analogRead(CNY_Back_L);
-    Value_CNY_Back_R = analogRead(CNY_Back_R);
-    Value_CNY_Front = analogRead(CNY_Front);
-
-    //Voltage calculation1
-    /*Voltage_CNY_Back_L = Value_CNY_Back_L*ResolutionADC;
-    Voltage_CNY_Back_R = Value_CNY_Back_R*ResolutionADC;
-    Voltage_CNY_Front = Value_CNY_Front*ResolutionADC;
+    /* 
+    UpdateCNYVoltage();
     Serial1.println("Valor FRENTE: "); Serial1.println(Voltage_CNY_Front);
     Serial1.println("Valor ATRAS_R: "); Serial1.println(Voltage_CNY_Back_R);
     Serial1.println("Valor ATRAS_L: "); Serial1.println(Voltage_CNY_Back_L);
-    delay(500);*/
+    delay(500); 
+    */
     
     if(terminar) {
-      stop();
+      Stop();
     }
     else {
       if(hasPassedBox()) {
@@ -598,8 +569,8 @@ void loop(){
         senal_delante=true;
         intelligentForward();
         //Si encuentra un hueco a la derecha cuando encuentra una línea atrás, girar a la derecha
-        double distR=getSharpR();
-        double distL=getSharpL();
+        double distR=GetSharpR();
+        double distL=GetSharpL();
         double topeR=12;
         double topeL=12;
         if((distR>topeR || distR==0) && lineFoundBack()) {
@@ -611,7 +582,7 @@ void loop(){
           parar=true;
           senal_delante=false;
         }
-        if(getUltrasonic()<=5 && tiempo>50) {
+        if(GetUltrasonicDistance()<=5 && tiempo>50) {
           parar=true;
           derecha=false;
           senal_derecha=false;
@@ -632,7 +603,7 @@ void loop(){
           alinear();
           intelligentForward(255);
           delay(500);
-          stop();
+          Stop();
           rotarDerecha();
           parar=false;
           derecha=false; 
@@ -641,19 +612,19 @@ void loop(){
         }
         else {
           //alinear();
-          while(getUltrasonic()>6) {
+          while(GetUltrasonicDistance()>6) {
             intelligentForward();
           }
-          stop();
+          Stop();
           //
           alinear();
           intelligentForward(255);
           delay(500);
-          stop();
+          Stop();
           //
           //Analizar hacia qué lado girar
-          double distR=getSharpR();
-          double distL=getSharpL();
+          double distR=GetSharpR();
+          double distL=GetSharpL();
           double topeR=12;
           double topeL=12;
           if(distR>topeR || distR==0 || distL>topeL || distL==0) {
