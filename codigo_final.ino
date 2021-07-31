@@ -135,34 +135,6 @@ void backRight() {
     analogWrite(pin1RightMotor, 255);
 }
 
-void turnRight(int AnalogValue=255) {
-    analogWrite(pin2Left_Motor, 0);
-    analogWrite(pin2RightMotor, 0);
-    analogWrite(pin1Left_Motor, 0);
-    analogWrite(pin1RightMotor, AnalogValue);
-}
-
-void turnLeft(int AnalogValue=255) {
-    analogWrite(pin2Left_Motor, 0);
-    analogWrite(pin2RightMotor, 0);
-    analogWrite(pin1Left_Motor, AnalogValue);
-    analogWrite(pin1RightMotor, 0);
-}
-
-void spinL(int AnalogValue=255) {
-    analogWrite(pin2Left_Motor, 0);
-    analogWrite(pin2RightMotor, 0);
-    analogWrite(pin1Left_Motor, AnalogValue);
-    analogWrite(pin1RightMotor, AnalogValue);
-}
-
-void spinR(int AnalogValue=255) {
-    analogWrite(pin1Left_Motor, 0);
-    analogWrite(pin1RightMotor, 0);
-    analogWrite(pin2Left_Motor, AnalogValue);
-    analogWrite(pin2RightMotor, AnalogValue);
-}
-
 bool lineFoundFront() {
     //Read CNY values
     Value_CNY_Back_L = analogRead(CNY_Back_L);
@@ -566,66 +538,27 @@ void rotar180() {
 }
 
 int actualizar_movimiento(int ultimo_movimiento, int movimiento) {
-  switch(ultimo_movimiento) {
-    case 0: if(movimiento==0) {
-              return 0;
-            }
-            if(movimiento==1) {
-              return 1;
-            }
-            if(movimiento==2) {
-              return 2;
-            }
-            if(movimiento==3) {
-              return 3;
-            }
-    case 1: if(movimiento==0) {
-              return 1;
-            }
-            if(movimiento==1) {
-              return 0;
-            }
-            if(movimiento==2) {
-              return 3;
-            }
-            if(movimiento==3) {
-              return 2;
-            }
-    case 2: if(movimiento==0) {
-              return 2;
-            }
-            if(movimiento==1) {
-              return 3;
-            }
-            if(movimiento==2) {
-              return 1;
-            }
-            if(movimiento==3) {
-              return 0;
-            }
-    case 3: if(movimiento==0) {
-              return 3;
-            }
-            if(movimiento==1) {
-              return 2;
-            }
-            if(movimiento==2) {
-              return 0;
-            }
-            if(movimiento==3) {
-              return 1;
-            }
-     default: return -1; break;
-  }
+    // 0 up, 1 down, 2 left, 3 right
+    if(ultimo_movimiento < 0 || ultimo_movimiento > 3) 
+        return -1;
+    if( ultimo_movimiento == 0) 
+        return movimiento; 
+    int nuevo_movimiento[3][4] = {  
+        { 1, 0, 3, 2},
+        { 2, 3, 1, 0},
+        { 3, 2, 0, 1} 
+    };
+    return nuevo_movimiento[ultimo_movimiento-1][movimiento];
 }
 
 bool opuestos(int movimiento1, int movimiento2) {
-  switch(movimiento1) {
-    case 0: return (movimiento2==1); break;
-    case 1: return (movimiento2==0); break;
-    case 2: return (movimiento2==3); break;
-    case 3: return (movimiento2==2); break;
-  }
+    switch(movimiento1) {
+        case 0: return (movimiento2==1); break;
+        case 1: return (movimiento2==0); break;
+        case 2: return (movimiento2==3); break;
+        case 3: return (movimiento2==2); break;
+        default: return -1;
+    }
 }
 
 void acotar_camino() {
