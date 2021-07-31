@@ -166,7 +166,7 @@ bool noLineFound() {
     return !lineFoundFront() && !lineFoundBack();
 }
 
-/* return the distance of a Sharp sensor based on its voltage*/
+/* Return the distance(in cm) of a Sharp sensor based on its voltage*/
 double GetDistanceFromSharpVoltage(double valor) {  
     if(valor<0.5 || valor>2.7) {
         return 0;
@@ -177,34 +177,21 @@ double GetDistanceFromSharpVoltage(double valor) {
     }
 }
 
-void ShowSharpR() {
-  Serial.print("Sharp R: ");
-  Serial.print(GetSharpR());
-  Serial.println(" cm");
-}
-
-void ShowSharpL() {
-  Serial.print("Sharp L: ");
-  Serial.print(GetSharpL());
-  Serial.println(" cm");
-}
-
-double GetSharpR() {
+double GetRightSharpDistance() {
     return GetDistanceFromSharpVoltage( VoltageFromAnalogRead(SharpR) );
 }
 
-double GetSharpL() {
+double GetLeftSharpDistance() {
     return GetDistanceFromSharpVoltage( VoltageFromAnalogRead(SharpL) );
 }
 
+/*Return the distance from Ultrasonic Sensor*/
 double GetUltrasonicDistance() {
-  digitalWrite(Trigger, LOW);
-  delayMicroseconds(5);
-  digitalWrite(Trigger, HIGH);
+  digitalWrite(Trigger, HIGH); //send pulse for 10 us
   delayMicroseconds(10);
   digitalWrite(Trigger, LOW);
   time_bounce=pulseIn(Echo, HIGH);
-  return 0.017 * time_bounce; //Fórmula para calcular la distancia
+  return 0.017 * time_bounce; //Distance formula
 }
 
 void setup(){
@@ -212,7 +199,8 @@ void setup(){
     pinMode(pin2Left_Motor, OUTPUT);
     pinMode(pin1RightMotor, OUTPUT);
     pinMode(pin2RightMotor, OUTPUT);
-    pinMode(Trigger, OUTPUT);
+    pinMode(Trigger, OUTPUT); 
+    digitalWrite(Trigger, LOW);
     pinMode(Echo, INPUT);
     pinMode(2,INPUT);
     pinMode(3,INPUT);
@@ -248,7 +236,7 @@ bool hasPassedBox() {
 }
 
 void balanceLeft() {  /* Mantener el robot con la referencia de la pared de la izquierda */
-  double distL=GetSharpL();
+  double distL=GetLeftSharpDistance();
   if(distL<10) {   //Valía 6
     //Serial1.println("VIRANDO A LA DERECHA");
     TackRight();
@@ -264,7 +252,7 @@ void balanceLeft() {  /* Mantener el robot con la referencia de la pared de la i
 }
 
 void balanceRight() {  /* Mantener el robot con la referencia de la pared de la derecha */
-  double distR=GetSharpR();
+  double distR=GetRightSharpDistance();
   if(distR<10) {   //Valía 6
     TackLeft();
     delay(50);
@@ -278,8 +266,8 @@ void balanceRight() {  /* Mantener el robot con la referencia de la pared de la 
 }
 
 void intelligentForward(int potencia=150) {
-  double distR=GetSharpR();
-  double distL=GetSharpL();
+  double distR=GetRightSharpDistance();
+  double distL=GetLeftSharpDistance();
   double diferencia=distR-distL;
   double umbralp=2;
   double umbraln=-umbralp;
@@ -569,8 +557,8 @@ void loop(){
         senal_delante=true;
         intelligentForward();
         //Si encuentra un hueco a la derecha cuando encuentra una línea atrás, girar a la derecha
-        double distR=GetSharpR();
-        double distL=GetSharpL();
+        double distR=GetRightSharpDistance();
+        double distL=GetLeftSharpDistance();
         double topeR=12;
         double topeL=12;
         if((distR>topeR || distR==0) && lineFoundBack()) {
@@ -623,8 +611,8 @@ void loop(){
           Stop();
           //
           //Analizar hacia qué lado girar
-          double distR=GetSharpR();
-          double distL=GetSharpL();
+          double distR=GetRightSharpDistance();
+          double distL=GetLeftSharpDistance();
           double topeR=12;
           double topeL=12;
           if(distR>topeR || distR==0 || distL>topeL || distL==0) {
