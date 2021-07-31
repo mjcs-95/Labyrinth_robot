@@ -17,7 +17,6 @@ int start;
 const float ResolutionADC=0.00488; //4.88mV
 float distance;
 unsigned long time_bounce;
-const int tiempo_giro=700;
 int Value_SharpR=0;
 int Value_SharpL=0;
 float VoltageR, VoltageL;
@@ -33,7 +32,6 @@ int transicionPin2=0;
 int transicionPin3=0;
 //
 int contadorCeldas=0;
-bool espera=false;
 bool derecha=false;
 bool senal_derecha=false;
 bool senal_delante=true;
@@ -135,110 +133,50 @@ void backRight() {
     analogWrite(pin1RightMotor, 255);
 }
 
+void UpdateCNYVoltage(){
+    Voltage_CNY_Back_L = analogRead(CNY_Back_L)*ResolutionADC;
+    Voltage_CNY_Back_R = analogRead(CNY_Back_R)*ResolutionADC;
+    Voltage_CNY_Front = analogRead(CNY_Front)*ResolutionADC;
+}
+
+//Previously the Voltage required in all CNYs was 3.4
 bool lineFoundFront() {
-    //Read CNY values
-    Value_CNY_Back_L = analogRead(CNY_Back_L);
-    Value_CNY_Back_R = analogRead(CNY_Back_R);
-    Value_CNY_Front = analogRead(CNY_Front);
-
-    //Voltage calculation
-    Voltage_CNY_Back_L = Value_CNY_Back_L*ResolutionADC;
-    Voltage_CNY_Back_R = Value_CNY_Back_R*ResolutionADC;
-    Voltage_CNY_Front = Value_CNY_Front*ResolutionADC;
-
-    bool found=false;
-    if(Voltage_CNY_Front>3.4 /*&& (Voltage_CNY_Front-min(Voltage_CNY_Back_L, Voltage_CNY_Back_R))>1*/) {  //Valor estaba a 3.4
-      found=true;
-    }
-    return found;
+    UpdateCNYVoltage();
+    return (Voltage_CNY_Front>3.4); /*&& (Voltage_CNY_Front-min(Voltage_CNY_Back_L, Voltage_CNY_Back_R))>1*/
 }
 
 bool lineFoundBack() {
-    //Read CNY values
-    Value_CNY_Back_L = analogRead(CNY_Back_L);
-    Value_CNY_Back_R = analogRead(CNY_Back_R);
-    Value_CNY_Front = analogRead(CNY_Front);
-
-    //Voltage calculation
-    Voltage_CNY_Back_L = Value_CNY_Back_L*ResolutionADC;
-    Voltage_CNY_Back_R = Value_CNY_Back_R*ResolutionADC;
-    Voltage_CNY_Front = Value_CNY_Front*ResolutionADC;
-
-    bool found=false;
-    if((Voltage_CNY_Back_L>3.7 || Voltage_CNY_Back_R>3.7) /*&& (max(Voltage_CNY_Back_L, Voltage_CNY_Back_R)-Voltage_CNY_Front)>1*/) { //Voltage_CNY_Back_L y R antes estaban a 3.4
-      found=true;
-    }
-    return found;
+    UpdateCNYVoltage();
+    return (Voltage_CNY_Back_L>3.7 || Voltage_CNY_Back_R>3.7); /*&& (max(Voltage_CNY_Back_L, Voltage_CNY_Back_R)-Voltage_CNY_Front)>1*/
 }
 
 bool lineFoundBack_L() {
-    //Read CNY values
-    Value_CNY_Back_L = analogRead(CNY_Back_L);
-    Value_CNY_Back_R = analogRead(CNY_Back_R);
-    Value_CNY_Front = analogRead(CNY_Front);
-
-    //Voltage calculation
-    Voltage_CNY_Back_L = Value_CNY_Back_L*ResolutionADC;
-    Voltage_CNY_Back_R = Value_CNY_Back_R*ResolutionADC;
-    Voltage_CNY_Front = Value_CNY_Front*ResolutionADC;
-
-    bool found=false;
-    if(Voltage_CNY_Back_L>3.7 /*&& (max(Voltage_CNY_Back_L, Voltage_CNY_Back_R)-Voltage_CNY_Front)>1*/) {   //Voltage_CNY_Back_L estaba a 3.4
-      found=true;
-    }
-    return found;
+    UpdateCNYVoltage();
+    return (Voltage_CNY_Back_L>3.7); /*&& (max(Voltage_CNY_Back_L, Voltage_CNY_Back_R)-Voltage_CNY_Front)>1*/ 
 }
 
 bool lineFoundBack_R() {
-    //Read CNY values
-    Value_CNY_Back_L = analogRead(CNY_Back_L);
-    Value_CNY_Back_R = analogRead(CNY_Back_R);
-    Value_CNY_Front = analogRead(CNY_Front);
-
-    //Voltage calculation
-    Voltage_CNY_Back_L = Value_CNY_Back_L*ResolutionADC;
-    Voltage_CNY_Back_R = Value_CNY_Back_R*ResolutionADC;
-    Voltage_CNY_Front = Value_CNY_Front*ResolutionADC;
-
-    bool found=false;
-    if(Voltage_CNY_Back_R>3.7 /*&& (max(Voltage_CNY_Back_L, Voltage_CNY_Back_R)-Voltage_CNY_Front)>1*/) {   //Voltage_CNY_Back_R estaba a 3.4
-      found=true;
-    }
-    return found;
+    UpdateCNYVoltage();
+    return (Voltage_CNY_Back_R>3.7); /*&& (max(Voltage_CNY_Back_L, Voltage_CNY_Back_R)-Voltage_CNY_Front)>1*/ 
 }
 
 bool todoNegro() {
-    //Read CNY values
-    Value_CNY_Back_L = analogRead(CNY_Back_L);
-    Value_CNY_Back_R = analogRead(CNY_Back_R);
-    Value_CNY_Front = analogRead(CNY_Front);
-
-    //Voltage calculation
-    Voltage_CNY_Back_L = Value_CNY_Back_L*ResolutionADC;
-    Voltage_CNY_Back_R = Value_CNY_Back_R*ResolutionADC;
-    Voltage_CNY_Front = Value_CNY_Front*ResolutionADC;
-
-    bool found=false;
-    if(Voltage_CNY_Front>3.4 && Voltage_CNY_Back_L>3.7 && Voltage_CNY_Back_R>3.7) {   //Los voltajes estaban a 3.4
-      found=true;
-    }
-    return found;
+    UpdateCNYVoltage();
+    return (Voltage_CNY_Front>3.4 && Voltage_CNY_Back_L>3.7 && Voltage_CNY_Back_R>3.7);
 }
 
 bool noLineFound() {
-  return !lineFoundFront() && !lineFoundBack();
+    return !lineFoundFront() && !lineFoundBack();
 }
 
-double getDistance(double valor) {
-  double centimetros=0;
-  if(valor<0.5 || valor>2.7) {
-    return centimetros;
-  }
-  else {
-    centimetros=valor/13.05;
-    centimetros=(1-centimetros*0.42)/centimetros;
-    return centimetros;
-  }
+double getDistance(double valor) {  
+    if(valor<0.5 || valor>2.7) {
+        return 0;
+    } else {
+        double centimetros=valor/13.05;
+        centimetros=(1-centimetros*0.42)/centimetros;
+        return centimetros;
+    }
 }
 
 void showSharpR() {
@@ -553,11 +491,11 @@ int actualizar_movimiento(int ultimo_movimiento, int movimiento) {
 
 bool opuestos(int movimiento1, int movimiento2) {
     switch(movimiento1) {
-        case 0: return (movimiento2==1); break;
-        case 1: return (movimiento2==0); break;
-        case 2: return (movimiento2==3); break;
-        case 3: return (movimiento2==2); break;
-        default: return -1;
+        case 0: return (movimiento2==1);
+        case 1: return (movimiento2==0);
+        case 2: return (movimiento2==3);
+        case 3: return (movimiento2==2);
+        default: return false;
     }
 }
 
